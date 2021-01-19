@@ -1,63 +1,212 @@
 # Banking API
+================================
+# MYSQL DB and Table Scripts
+================================
 
-## Objective
+CREATE DATABASE `bank`;
 
-Your assignment is to build an internal API for a fake financial institution using Node and no framework.
-Brief
+CREATE TABLE `customer` (
+`CustomerId` int NOT NULL AUTO_INCREMENT,
+`CustomerName` varchar(45) NOT NULL,
+`CustomerInitial` varchar(45) NOT NULL,
+`WithInBank` tinyint NOT NULL,
+`CreatedOn` datetime NOT NULL,
+PRIMARY KEY (`CustomerId`)
+)
 
-While modern banks have evolved to serve a plethora of functions, at their core, 
-banks must provide certain basic features. Today, your task is to build the basic HTTP API for one of those banks! 
-Imagine you are designing a backend API for bank employees. 
-It could ultimately be consumed by multiple frontends (web, iOS, Android etc).
+CREATE TABLE `account` (
+`AccountId` int NOT NULL AUTO_INCREMENT,
+`CustomerId` int NOT NULL,
+`Amount` decimal(10,0) DEFAULT NULL,
+`WithInBank` tinyint NOT NULL,
+`CreatedOn` date NOT NULL,
+PRIMARY KEY (`AccountId`),
+KEY `CustomerId_idx` (`CustomerId`),
+CONSTRAINT `CustomerId` FOREIGN KEY (`CustomerId`) REFERENCES `customer` (`CustomerId`)
+)
 
-## Tasks
-```
-    Implement assignment using:
-        Language: Node
-        Framework: no framework
-    There should be API routes that allow them to:
-        Create a new bank account for a customer, with an initial deposit amount. 
-        A single customer may have multiple bank accounts.
-        Transfer amounts between any two accounts, including those owned by different customers.
-        Retrieve balances for a given account.
-        Retrieve transfer history for a given account.
-    Write tests for your business logic
-```
-Feel free to pre-populate your customers with the following:
-```
+CREATE TABLE `history` (
+`HistoryId` int NOT NULL AUTO_INCREMENT,
+`AccountId` int DEFAULT NULL,
+`FromAccountId` int NOT NULL,
+`ToAccount` int DEFAULT NULL,
+`Credited` decimal(10,0) DEFAULT NULL,
+`Debitted` decimal(10,0) DEFAULT NULL,
+`CreatedOn` datetime NOT NULL,
+PRIMARY KEY (`HistoryId`)
+)
+
+# REST API'S
+================================
+
+------------------------------
+# API TO GET LIST OF CUSTOMERS
+-------------------------------
+
+# METHOD: GET
+http://localhost:20200/customers
+
+# SAMPLE OUTPUT
+
 [
-  {
-    "id": 1,
-    "name": "Arisha Barron"
-  },
-  {
-    "id": 2,
-    "name": "Branden Gibson"
-  },
-  {
-    "id": 3,
-    "name": "Rhonda Church"
-  },
-  {
-    "id": 4,
-    "name": "Georgina Hazel"
-  }
+{
+"CustomerId": 1,
+"CustomerName": "Arisha Barron",
+"CustomerInitial": "AB",
+"WithInBank": 1,
+"CreatedOn": "2021-01-18T17:19:20.000Z"
+},
+{
+"CustomerId": 2,
+"CustomerName": "Branden Gibson",
+"CustomerInitial": "BG",
+"WithInBank": 1,
+"CreatedOn": "2021-01-18T17:20:02.000Z"
+},
+{
+"CustomerId": 3,
+"CustomerName": "Rhonda Church",
+"CustomerInitial": "RC",
+"WithInBank": 1,
+"CreatedOn": "2021-01-18T17:20:26.000Z"
+},
+{
+"CustomerId": 4,
+"CustomerName": "Georgina Hazel",
+"CustomerInitial": "GH",
+"WithInBank": 0,
+"CreatedOn": "2021-01-18T17:20:53.000Z"
+}
 ]
-```
-You are expected to design any other required models and routes for your API.
+==============================================
 
-Evaluation Criteria:
-```
-    Node best practices
-    Completeness: did you complete the features?
-    Correctness: does the functionality act in sensible, thought-out ways?
-    Maintainability: is it written in a clean, maintainable way?
-    Testing: is the system adequately tested?
-    Documentation: is the API well-documented?
-```
+-----------------------------
+# API TO CREATE NEW CUSTOMER
+-----------------------------
 
-Please organize, design, test and document your code as if it were going into production - create a Git repo, push your code, then share it with us.
+# METHOD: POST
+# MINIMUM INITAIL DEPOSIT SHOULD NOT BE LESS THAN 500
 
-All the best and happy coding,
+http://localhost:20200/customers/
 
-The Pay Perform Team
+# SAMPLE INPUT
+
+{
+    "CustomerName": "Georgina Hazel",
+    "CustomerInitial": "D",
+    "WithInBank":true,
+    "Amount": 500
+}
+  
+# SAMPLE OUTPUT
+
+{
+    "message": "Customer Created Successfully!!!!"
+}
+====================================================
+
+-------------------------------------------------------
+# API TO TRANSFER FROM ONE ACCOUNT TO ANOTHER ACCOUNT
+-------------------------------------------------------
+
+# METHOD: POST
+# FOR ANOTHER BANK ACCOUNT TRANSFER "WithInBank" SHOULD BE FALSE
+# SAMPLE INPUT
+
+{
+    "FromAccount": 2,
+    "ToAccount": 3,
+    "AmountToTransfer": 100,
+    "WithInBank": true
+
+}
+
+# SAMPLE OUTPUT
+
+{
+    "message": "Transferred Successfully!!!!!"
+}
+====================================================
+
+-----------------------------------------------
+# API TO GET BALANCE OF ACCOUNT BY ACCOUNTID
+-----------------------------------------------
+
+# METHOD: POST
+
+http://localhost:20200/account/balance
+
+# SAMPLE INPUT
+
+{
+    "AccountId": 3
+
+}
+
+# SAMPLE OUTPUT
+
+{
+    "message": "Available Balance: 20096"
+}
+==========================================================
+
+----------------------------------------------------------
+# API TO GET TRANSACTION HISTORY OF ACCOUNT BY ACCOUNTID
+----------------------------------------------------------
+
+# METHOD: POST
+
+http://localhost:20200/account/transactionHistory
+
+# SAMPLE INPUT
+
+{
+    "AccountId": 3
+
+}
+
+# SAMPLE OUTPUT
+
+[
+    {
+        "AccountId": 3,
+        "FromAccountId": 3,
+        "ToAccount": 1,
+        "Credited": null,
+        "Debitted": "4",
+        "Date": "2021-01-18T19:35:21.000Z"
+    },
+    {
+        "AccountId": 3,
+        "FromAccountId": 3,
+        "ToAccount": 2,
+        "Credited": null,
+        "Debitted": "100",
+        "Date": "2021-01-18T19:37:56.000Z"
+    },
+    {
+        "AccountId": 3,
+        "FromAccountId": 2,
+        "ToAccount": null,
+        "Credited": "100",
+        "Debitted": null,
+        "Date": "2021-01-18T19:44:57.000Z"
+    },
+    {
+        "AccountId": 3,
+        "FromAccountId": 2,
+        "ToAccount": null,
+        "Credited": "100",
+        "Debitted": null,
+        "Date": "2021-01-19T06:40:18.000Z"
+    }
+]
+  
+====================================================================
+
+
+
+
+
+
+
